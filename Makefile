@@ -1,9 +1,5 @@
 SERVICES=geth-1\
 	 geth-2\
-	 besu-1 \
-	 prysm-beacon-node\
-	 prysm-beacon-node-follower\
-	 prysm-validator-node\
 	 lighthouse-beacon-node\
 	 lighthouse-beacon-node-follower\
 	 lighthouse-validator-node\
