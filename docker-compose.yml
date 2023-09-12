@@ -4,7 +4,6 @@ volumes:
   lighthouse_data:
   prysm_data:
   lodestar_data:
-  config_data:
   teku_data:
 
 x-geth: &geth
@@ -22,7 +21,7 @@ x-geth: &geth
     retries: 40
     start_period: 1s
   volumes:
-    - 'config_data:/config_data'
+    - './config_data:/config_data'
     - type: bind
       source: ./geth/geth.sh
       target: /usr/local/bin/geth.sh
@@ -40,7 +39,7 @@ x-nethermind: &nethermind
     retries: 40
     start_period: 1s
   volumes:
-    - 'config_data:/config_data'
+    - './config_data:/config_data'
     - type: bind
       source: ./nethermind/nethermind.sh
       target: /usr/local/bin/nethermind.sh
@@ -60,7 +59,7 @@ x-besu: &besu
     retries: 40
     start_period: 1s
   volumes:
-    - 'config_data:/config_data'
+    - './config_data:/config_data'
     - type: bind
       source: ./besu/besu.sh
       target: /usr/local/bin/besu.sh
@@ -94,7 +93,7 @@ x-prysm-beacon-node: &prysm-bn
     start_period: 1s
   entrypoint: run_beacon_node.sh
   volumes:
-    - 'config_data:/config_data'
+    - './config_data:/config_data'
     - type: bind
       source: ./prysm/run_beacon_node.sh
       target: /usr/local/bin/run_beacon_node.sh
@@ -112,7 +111,7 @@ x-lighthouse-beacon-node: &lighthouse-bn
     - "9000:9000"
   volumes:
     - lighthouse_data:/data
-    - config_data:/config_data
+    - ./config_data:/config_data
     - type: bind
       source: ./lighthouse/run_beacon_node.sh
       target: /usr/local/bin/run_beacon_node.sh
@@ -139,7 +138,7 @@ services:
       - prysm_data:/prysm_data
       - lodestar_data:/lodestar_data
       - teku_data:/teku_data
-      - config_data:/data
+      - ./config_data:/data
 
   geth-1:
     <<: *geth
@@ -194,7 +193,7 @@ services:
     ports:
       - '11545:8545'
     volumes:
-      - 'config_data:/config_data'
+      - './config_data:/config_data'
       - type: bind
         source: ./lodestar/run_beacon_node.sh
         target: /usr/local/bin/run_beacon_node.sh
@@ -211,7 +210,7 @@ services:
     command: run_bootnode.sh
     volumes:
       - lighthouse_data:/data
-      - config_data:/config_data
+      - ./config_data:/config_data
       - ./shared/genesis-generator-configs:/config
       - type: bind
         source: ./lighthouse/run_bootnode.sh
@@ -311,7 +310,7 @@ services:
     ports:
       - '7500:7500'
     volumes:
-      - 'config_data:/config_data'
+      - './config_data:/config_data'
       - 'prysm_data:/prysm_data'
 
   prysm-validator-node-besu-el:
@@ -344,46 +343,9 @@ services:
     ports:
       - '7500:7500'
     volumes:
-      - 'config_data:/config_data'
+      - './config_data:/config_data'
       - 'prysm_data:/prysm_data'
 
-  lodestar-beacon-node:
-    depends_on:
-      bootnode:
-        condition: service_started
-      geth-3:
-        condition: service_healthy
-      genesis-generator:
-        condition: service_completed_successfully
-    image: g11tech/lodestar:4844-jan23
-    environment:
-      EXECUTION_NODE_URL: http://geth-3:8551
-    entrypoint: ['run_beacon_node.sh']
-    ports:
-      - '3600:3500'
-      - '14000:13000'
-    volumes:
-      - 'config_data:/config_data'
-      - type: bind
-        source: ./lodestar/run_beacon_node.sh
-        target: /usr/local/bin/run_beacon_node.sh
-
-  lodestar-validator-node:
-    depends_on:
-      - lodestar-beacon-node
-    image: g11tech/lodestar:4844-jan23
-    command: >
-      validator
-      --paramsFile /config_data/custom_config_data/config.yaml
-      --force
-      --dataDir /chaindata/validator
-      --keystoresDir /lodestar_data/keystores
-      --secretsDir /lodestar_data/secrets
-      --server http://lodestar-beacon-node:3500
-      --suggestedFeeRecipient 0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b
-    volumes:
-      - 'config_data:/config_data'
-      - 'lodestar_data:/lodestar_data'
 
   lighthouse-beacon-node:
     <<: *lighthouse-bn
@@ -440,7 +402,7 @@ services:
       --suggested-fee-recipient 0x690B9A9E9aa1C9dB991C7721a92d351Db4FaC990
     volumes:
       - lighthouse_data:/data
-      - config_data:/config_data
+      - ./config_data:/config_data
 
   jaeger-tracing:
     image: jaegertracing/all-in-one:1.35
