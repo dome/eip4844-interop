@@ -18,10 +18,6 @@
 	path = lighthouse/lighthouse
 	url = https://github.com/sigp/lighthouse
 	branch = deneb-free-blobs
-[submodule "besu/besu"]
-	path = besu/besu
-	url = https://github.com/hyperledger/besu.git
-	branch = eip-4844-interop
 [submodule "ethereum-genesis-generator"]
 	path = ethereum-genesis-generator
 	url = https://github.com/syntrust/ethereum-genesis-generator.git
