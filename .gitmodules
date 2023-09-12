@@ -2,18 +2,6 @@
 	path = geth/go-ethereum
 	url = https://github.com/mdehoog/go-ethereum
 	branch = eip-4844
-[submodule "prysm/prysm"]
-	path = prysm/prysm
-	url = https://github.com/prysmaticlabs/prysm
-	branch = eip4844
-[submodule "lodestar/lodestar"]
-	path = lodestar/lodestar
-	url = https://github.com/chainsafe/lodestar
-	branch = dapplion/eip-4844
-[submodule "erigon/erigon"]
-	path = erigon/erigon
-	url = https://github.com/roberto-bayardo/erigon
-	branch = eip-4844
 [submodule "lighthouse/lighthouse"]
 	path = lighthouse/lighthouse
 	url = https://github.com/sigp/lighthouse
