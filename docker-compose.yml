@@ -26,77 +26,6 @@ x-geth: &geth
       source: ./geth/geth.sh
       target: /usr/local/bin/geth.sh
 
-x-nethermind: &nethermind
-  image: nethermindeth/nethermind:eip-4844-v4-workaround
-  depends_on:
-    genesis-generator:
-      condition: service_completed_successfully
-  entrypoint: 'nethermind.sh'
-  healthcheck:
-    test: ["CMD", "curl", "--fail", "localhost:8545"]
-    interval: 2s
-    timeout: 2s
-    retries: 40
-    start_period: 1s
-  volumes:
-    - './config_data:/config_data'
-    - type: bind
-      source: ./nethermind/nethermind.sh
-      target: /usr/local/bin/nethermind.sh
-
-x-besu: &besu
-  depends_on:
-    genesis-generator:
-      condition: service_completed_successfully
-  entrypoint: 'besu.sh'
-  build:
-    context: .
-    dockerfile: besu/Dockerfile.besu
-  healthcheck:
-    test: ["CMD", "curl", "--fail", "localhost:8545"]
-    interval: 2s
-    timeout: 2s
-    retries: 40
-    start_period: 1s
-  volumes:
-    - './config_data:/config_data'
-    - type: bind
-      source: ./besu/besu.sh
-      target: /usr/local/bin/besu.sh
-    - type: bind
-      source: ./besu/log4j2.xml
-      target: /opt/besu/log4j2.xml      
-
-x-prysm-beacon-node-env: &prysm-bn-env
-  TRACING_ENDPOINT: http://jaeger-tracing:14268/api/traces
-  PROCESS_NAME: beacon-node
-  VERBOSITY: debug
-  P2P_TCP_PORT: 13000
-  MIN_SYNC_PEERS: 0
-
-x-prysm-beacon-node: &prysm-bn
-  depends_on:
-    bootnode:
-      condition: service_started
-    jaeger-tracing:
-      condition: service_started
-    genesis-generator:
-      condition: service_completed_successfully
-  build:
-    context: ./prysm
-    dockerfile: Dockerfile.prysm
-  healthcheck:
-    test: ["CMD", "curl", "--fail", "localhost:3500/eth/v1/node/health"]
-    interval: 2s
-    timeout: 2s
-    retries: 40
-    start_period: 1s
-  entrypoint: run_beacon_node.sh
-  volumes:
-    - './config_data:/config_data'
-    - type: bind
-      source: ./prysm/run_beacon_node.sh
-      target: /usr/local/bin/run_beacon_node.sh
 
 x-lighthouse-beacon-node: &lighthouse-bn
   build:
@@ -110,7 +39,7 @@ x-lighthouse-beacon-node: &lighthouse-bn
     - "8000:8000"
     - "9000:9000"
   volumes:
-    - lighthouse_data:/data
+    - ./lighthouse_data:/data
     - ./config_data:/config_data
     - type: bind
       source: ./lighthouse/run_beacon_node.sh
@@ -134,10 +63,7 @@ services:
       - ./shared/run_genesis_generator.sh:/usr/local/bin/run_genesis_generator.sh
       - ./shared/genesis-generator-configs:/config
       - ./shared/generated-configs:/gen-configs
-      - lighthouse_data:/lighthouse_data
-      - prysm_data:/prysm_data
-      - lodestar_data:/lodestar_data
-      - teku_data:/teku_data
+      - ./lighthouse_data:/lighthouse_data
       - ./config_data:/data
 
   geth-1:
@@ -145,58 +71,25 @@ services:
     ports:
       - '8545:8545'
       - '8551:8551'
+    volumes:
+      - './data/geth-1:/db'
+      - './config_data:/config_data'
+      - type: bind
+        source: ./geth/geth.sh
+        target: /usr/local/bin/geth.sh
 
   geth-2:
     <<: *geth
     ports:
       - '8546:8545'
       - '8552:8551'
-
-  geth-3:
-    <<: *geth
-    ports:
-      - '8547:8545'
-      - '8553:8551'
-
-  nethermind-1:
-    <<: *nethermind
-    ports:
-      - '9545:8545'
-
-  nethermind-2:
-    <<: *nethermind
-    ports:
-      - '9546:8545'
-
-  besu-1:
-    <<: *besu
-    ports:
-      - '7551:8551'
-      - '7545:8545'
-      - '5005:5005'
-
-  ethereumjs:
-    image: g11tech/ethereumjs:jan23
-    depends_on:
-      genesis-generator:
-        condition: service_completed_successfully
-    command: >
-      --dataDir=/db
-      --gethGenesis=/config_data/custom_config_data/genesis.json
-      --rpc
-      --rpcAddr=0.0.0.0
-      --rpcCors="*"
-      --rpcEngine
-      --rpcEngineAddr=0.0.0.0
-      --logLevel=debug
-      --jwt-secret=/config_data/el/jwtsecret
-    ports:
-      - '11545:8545'
     volumes:
+      - './data/geth-2:/db'
       - './config_data:/config_data'
       - type: bind
-        source: ./lodestar/run_beacon_node.sh
-        target: /usr/local/bin/run_beacon_node.sh
+        source: ./geth/geth.sh
+        target: /usr/local/bin/geth.sh
+
 
   # TODO: move bootnode to genesis-generator
   bootnode:
@@ -209,7 +102,7 @@ services:
     pull_policy: never
     command: run_bootnode.sh
     volumes:
-      - lighthouse_data:/data
+      - ./lighthouse_data:/data
       - ./config_data:/config_data
       - ./shared/genesis-generator-configs:/config
       - type: bind
@@ -401,7 +294,7 @@ services:
       --beacon-nodes http://lighthouse-beacon-node:8000
       --suggested-fee-recipient 0x690B9A9E9aa1C9dB991C7721a92d351Db4FaC990
     volumes:
-      - lighthouse_data:/data
+      - ./lighthouse_data:/data
       - ./config_data:/config_data
 
   jaeger-tracing:
